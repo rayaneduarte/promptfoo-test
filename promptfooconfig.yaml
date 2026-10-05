@@ -1,0 +1,82 @@
+# yaml-language-server: $schema=https://promptfoo.dev/config-schema.json
+
+# Learn more about building a configuration: https://promptfoo.dev/docs/configuration/guide
+
+description: "Email writer evaluation"
+ 
+prompts:
+  - |
+    Draft an email based on these bullet points.
+    Match the specified tone throughout the email.
+ 
+    Bullet points:
+    {{bullet_points}}
+ 
+    Tone: {{tone}}
+  
+providers:
+  - id: bedrock:amazon.nova-micro-v1:0
+    label: Nova Micro
+    config:
+      region: us-east-1
+  - id: bedrock:amazon.nova-lite-v1:0
+    label: Nova Lite
+    config:
+      region: us-east-1
+  
+defaultTest:
+  assert:
+    - type: latency
+      threshold: 30000
+
+tests:
+  - vars:
+      bullet_points: |
+        - Recap of the design review decisions
+        - Next steps: finalize mockups by Thursday
+        - Ask if anyone has questions
+      tone: "casual"
+    assert:
+      - type: icontains
+        value: "mockups"
+      - type: not-contains
+        value: "Dear"
+      - type: llm-rubric
+        value: "The email uses a casual tone with contractions and short sentences"
+        provider:
+          id: bedrock:amazon.nova-pro-v1:0
+          config:
+            region: us-east-1
+ 
+  - vars:
+      bullet_points: |
+        - Q1 revenue exceeded targets by 12%
+        - New enterprise client onboarded
+        - Hiring plan for Q2 approved
+      tone: "formal"
+    assert:
+      - type: icontains
+        value: "Q1"
+      - type: llm-rubric
+        value: "The email maintains a formal, professional tone throughout"
+        provider:
+          id: bedrock:amazon.nova-pro-v1:0
+          config:
+            region: us-east-1
+ 
+  - vars:
+      bullet_points: |
+        - API migration deadline is Friday at 5pm
+        - Three endpoints still need updating
+        - Downtime window is Saturday 2-6am
+      tone: "urgent"
+    assert:
+      - type: icontains
+        value: "Friday"
+      - type: llm-rubric
+        value: "The email conveys urgency with direct language and clear action items"
+        provider:
+          id: bedrock:amazon.nova-pro-v1:0
+          config:
+            region: us-east-1
+

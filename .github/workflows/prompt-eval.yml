@@ -1,0 +1,40 @@
+name: 'Prompt Evaluation'
+
+on:
+  pull_request:
+    paths:
+      - 'promptfooconfig.yaml'
+      - '.github/workflows/prompt-eval.yml'
+
+jobs:
+  evaluate:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Set up promptfoo cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.promptfoo/cache
+            .promptfoo-cache
+          key: ${{ runner.os }}-promptfoo-${{ hashFiles('promptfooconfig.yaml') }}-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-promptfoo-${{ hashFiles('promptfooconfig.yaml') }}-
+            ${{ runner.os }}-promptfoo-
+
+      - name: Run promptfoo evaluation
+        uses: promptfoo/promptfoo-action@v1
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          config: 'promptfooconfig.yaml'
+          cache-path: '.promptfoo-cache'
