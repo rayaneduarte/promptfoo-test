@@ -8,6 +8,7 @@ prompts:
   - |
     Draft an email based on these bullet points.
     Match the specified tone throughout the email.
+    Include every bullet point in the email.
  
     Bullet points:
     {{bullet_points}}
